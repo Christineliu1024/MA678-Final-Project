@@ -1,0 +1,504 @@
+---
+title: "MA678 Final Project"
+author: "Jiahao Liu"
+date: "2022-11-18"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+#library(rstanarm)
+library(lmerTest)
+library(lme4)
+library(merTools)
+library(correlation)
+library(corrplot)
+library("PerformanceAnalytics")
+```
+
+# Data Processing
+```{r echo = FALSE, fig.height = 5.6, fig.width = 9}
+music_data <- read_csv('song_data.csv', show_col_types = FALSE)
+
+# Clean Data
+music_data <- drop_na(music_data)
+
+# Delete replicated song name
+music_data <- music_data[!duplicated(music_data[ ,c("song_name")]),]
+
+summary(music_data)
+```
+
+# Variable Selection
+```{r echo = FALSE, fig.height = 5.6, fig.width}
+count(music_data,key)
+count(music_data,time_signature)
+count(music_data,audio_mode)
+
+music_data %>% 
+  ggplot(aes(song_popularity)) + 
+  geom_density(col = 'sky blue') +
+  facet_wrap(~key) + 
+  labs(title = 'Density Plot of Song Popularity in Group Key')
+
+music_data %>% 
+  ggplot(aes(song_popularity)) + 
+  geom_density(col = 'red') +
+  facet_wrap(~time_signature) + 
+  labs(title = 'Density Plot of Song Popularity in Group Time Signature')
+
+music_data %>% 
+  ggplot(aes(song_popularity)) + 
+  geom_density(col = 'purple') +
+  facet_wrap(~audio_mode) + 
+  labs(title = 'Density Plot of Song Popularity in Group Audio Mode')
+
+music_data %>% 
+  ggplot(aes(energy)) + 
+  geom_density(col = 'sky blue') +
+  facet_wrap(~key) + 
+  labs(title = 'Density Plot of Energy in Group Key')
+
+music_data %>% 
+  ggplot(aes(energy)) + 
+  geom_density(col = 'red') +
+  facet_wrap(~time_signature) + 
+  labs(title = 'Density Plot of Energy in Group Time Signature')
+
+music_data %>% 
+  ggplot(aes(energy)) + 
+  geom_density(col = 'purple') +
+  facet_wrap(~audio_mode) + 
+  labs(title = 'Density Plot of Energy in Group Audio Mode')
+
+music_data %>% 
+  ggplot(aes(liveness)) + 
+  geom_density(col = 'sky blue') +
+  facet_wrap(~key) + 
+  labs(title = 'Density Plot of Liveness in Group Key')
+
+music_data %>% 
+  ggplot(aes(liveness)) + 
+  geom_density(col = 'red') +
+  facet_wrap(~time_signature) + 
+  labs(title = 'Density Plot of Liveness in Group Time Signature')
+
+music_data %>% 
+  ggplot(aes(liveness)) + 
+  geom_density(col = 'purple') +
+  facet_wrap(~audio_mode) + 
+  labs(title = 'Density Plot of Liveness in Group Audio Mode')
+
+music_data %>% 
+  ggplot(aes(loudness)) + 
+  geom_density(col = 'sky blue') +
+  facet_wrap(~key) + 
+  labs(title = 'Density Plot of Loudness in Group Key')
+
+music_data %>% 
+  ggplot(aes(loudness)) + 
+  geom_density(col = 'red') +
+  facet_wrap(~time_signature) + 
+  labs(title = 'Density Plot of Loudness in Group Time Signature')
+
+music_data %>% 
+  ggplot(aes(loudness)) + 
+  geom_density(col = 'purple') +
+  facet_wrap(~audio_mode) + 
+  labs(title = 'Density Plot of Loudness in Group Audio Mode')
+
+music_data %>% 
+  ggplot(aes(tempo)) + 
+  geom_density(col = 'sky blue') +
+  facet_wrap(~key) + 
+  labs(title = 'Density Plot of tempo in Group Key')
+
+music_data %>% 
+  ggplot(aes(tempo)) + 
+  geom_density(col = 'red') +
+  facet_wrap(~time_signature) + 
+  labs(title = 'Density Plot of Tempo in Group Time Signature')
+
+music_data %>% 
+  ggplot(aes(tempo)) + 
+  geom_density(col = 'purple') +
+  facet_wrap(~audio_mode) + 
+  labs(title = 'Density Plot of Tempo in Group Audio Mode')
+
+music_data %>% 
+  ggplot(aes(audio_valence)) + 
+  geom_density(col = 'sky blue') +
+  facet_wrap(~key) + 
+  labs(title = 'Density Plot of Audio Valence in Group Key')
+
+music_data %>% 
+  ggplot(aes(audio_valence)) + 
+  geom_density(col = 'red') +
+  facet_wrap(~time_signature) + 
+  labs(title = 'Density Plot of Audio Valence in Group Time Signature')
+
+music_data %>% 
+  ggplot(aes(audio_valence)) + 
+  geom_density(col = 'purple') +
+  facet_wrap(~audio_mode) + 
+  labs(title = 'Density Plot of Audio Valence in Group Audio Mode')
+
+music_data %>% 
+  ggplot(aes(speechiness)) + 
+  geom_density(col = 'sky blue') +
+  facet_wrap(~key) + 
+  labs(title = 'Density Plot of Speechiness in Group Key')
+
+music_data %>% 
+  ggplot(aes(speechiness)) + 
+  geom_density(col = 'red') +
+  facet_wrap(~time_signature) + 
+  labs(title = 'Density Plot of Speechiness in Group Time Signature')
+
+music_data %>% 
+  ggplot(aes(speechiness)) + 
+  geom_density(col = 'purple') +
+  facet_wrap(~audio_mode) + 
+  labs(title = 'Density Plot of Speechiness in Group Audio Mode')
+
+music_data %>% 
+  ggplot(aes(instrumentalness)) + 
+  geom_density(col = 'sky blue') +
+  facet_wrap(~key) + 
+  labs(title = 'Density Plot of Instrumentalness in Group Key')
+
+music_data %>% 
+  ggplot(aes(instrumentalness)) + 
+  geom_density(col = 'red') +
+  facet_wrap(~time_signature) + 
+  labs(title = 'Density Plot of Instrumentalness in Group Time Signature')
+
+music_data %>% 
+  ggplot(aes(instrumentalness)) + 
+  geom_density(col = 'purple') +
+  facet_wrap(~audio_mode) + 
+  labs(title = 'Density Plot of Instrumentalness in Group Audio Mode')
+
+music_data %>% 
+  ggplot(aes(song_duration_ms)) + 
+  geom_density(col = 'sky blue') +
+  facet_wrap(~key) + 
+  labs(title = 'Density Plot of Song Duration in Group Key')
+
+music_data %>% 
+  ggplot(aes(song_duration_ms)) + 
+  geom_density(col = 'red') +
+  facet_wrap(~time_signature) + 
+  labs(title = 'Density Plot of Song Duration in Group Time Signature')
+
+music_data %>% 
+  ggplot(aes(song_duration_ms)) + 
+  geom_density(col = 'purple') +
+  facet_wrap(~audio_mode) + 
+  labs(title = 'Density Plot of Song Duration in Group Audio Mode')
+
+music_data %>% 
+  ggplot(aes(acousticness)) + 
+  geom_density(col = 'sky blue') +
+  facet_wrap(~key) + 
+  labs(title = 'Density Plot of Acousticness in Group Key')
+
+music_data %>% 
+  ggplot(aes(acousticness)) + 
+  geom_density(col = 'red') +
+  facet_wrap(~time_signature) + 
+  labs(title = 'Density Plot of Acousticness in Group Time Signature')
+
+music_data %>% 
+  ggplot(aes(acousticness)) + 
+  geom_density(col = 'purple') +
+  facet_wrap(~audio_mode) + 
+  labs(title = 'Density Plot of Acousticness in Group Audio Mode')
+
+music_data %>% 
+  ggplot(aes(danceability)) + 
+  geom_density(col = 'sky blue') +
+  facet_wrap(~key) + 
+  labs(title = 'Density Plot of Danceability in Group Key')
+
+music_data %>% 
+  ggplot(aes(danceability)) + 
+  geom_density(col = 'red') +
+  facet_wrap(~time_signature) + 
+  labs(title = 'Density Plot of Danceability in Group Time Signature')
+
+music_data %>% 
+  ggplot(aes(danceability)) + 
+  geom_density(col = 'purple') +
+  facet_wrap(~audio_mode) + 
+  labs(title = 'Density Plot of Danceability in Group Audio Mode')
+```
+
+# Variable Selection
+```{r echo = FALSE, fig.height = 4, fig.width = 15}
+points_by_key <- ggplot(data = music_data) + 
+  aes(x = tempo, y = song_popularity) + 
+  geom_point(aes(color = factor(key)), size = .6) + 
+  geom_smooth(aes(color = factor(key)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure1.a: Song Popularity VS Tempo", x = "Tempo", y = "Song Popularity")
+
+points_by_time <- ggplot(data = music_data) + 
+  aes(x = tempo, y = song_popularity) + 
+  geom_point(aes(color = factor(time_signature)), size = .6) + 
+  geom_smooth(aes(color = factor(time_signature)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure1.b: Song Popularity VS Tempo", x = "Tempo", y = "Song Popularity") 
+
+points_by_mode <- ggplot(data = music_data) + 
+  aes(x = tempo, y = song_popularity) + 
+  geom_point(aes(color = factor(audio_mode)), size = .6) + 
+  geom_smooth(aes(color = factor(audio_mode)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure1.c: Song Popularity VS Tempo", x = "Tempo", y = "Song Popularity") 
+
+grid.arrange(points_by_key, points_by_mode, points_by_time, ncol = 3)
+```
+```{r echo = FALSE, fig.height = 4, fig.width = 15}
+points_by_key <- ggplot(data = music_data) + 
+  aes(x = log(audio_valence), y = song_popularity) + 
+  geom_point(aes(color = factor(key)), size = .6) + 
+  geom_smooth(aes(color = factor(key)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure2.a: Song Popularity VS Log(audio valence)", x = "Log(audio Valence)", y = "Song Popularity")
+
+points_by_time <- ggplot(data = music_data) + 
+  aes(x = audio_valence, y = song_popularity) + 
+  geom_point(aes(color = factor(time_signature)), size = .6) + 
+  geom_smooth(aes(color = factor(time_signature)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure2.b: Song Popularity VS Audio Valence", x = "Audio Valence", y = "Song Popularity") 
+
+points_by_mode <- ggplot(data = music_data) + 
+  aes(x = audio_valence, y = song_popularity) + 
+  geom_point(aes(color = factor(audio_mode)), size = .6) + 
+  geom_smooth(aes(color = factor(audio_mode)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure2.c: Song Popularity VS Audio Valence", x = "Audio Valence", y = "Song Popularity") 
+
+grid.arrange(points_by_key, points_by_mode, points_by_time, ncol = 3)
+```
+```{r echo = FALSE, fig.height = 4, fig.width = 15}
+points_by_key <- ggplot(data = music_data) + 
+  aes(x = log(energy), y = song_popularity) + 
+  geom_point(aes(color = factor(key)), size = .6) + 
+  geom_smooth(aes(color = factor(key)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure3.a: Song Popularity VS Log(energy)", x = "Log(energy)", y = "Song Popularity")
+
+points_by_time <- ggplot(data = music_data) + 
+  aes(x = energy, y = song_popularity) + 
+  geom_point(aes(color = factor(time_signature)), size = .6) + 
+  geom_smooth(aes(color = factor(time_signature)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure3.b: Song Popularity VS Energy", x = "Energy", y = "Song Popularity") 
+
+points_by_mode <- ggplot(data = music_data) + 
+  aes(x = energy, y = song_popularity) + 
+  geom_point(aes(color = factor(audio_mode)), size = .6) + 
+  geom_smooth(aes(color = factor(audio_mode)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure3.c: Song Popularity VS Energy", x = "Energy", y = "Song Popularity") 
+
+grid.arrange(points_by_key, points_by_mode, points_by_time, ncol = 3)
+```
+```{r echo = FALSE, fig.height = 4, fig.width = 15}
+points_by_key <- ggplot(data = music_data) + 
+  aes(x = loudness, y = song_popularity) + 
+  geom_point(aes(color = factor(key)), size = .6) + 
+  geom_smooth(aes(color = factor(key)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure4.a: Song Popularity VS Loudness", x = "Loudness", y = "Song Popularity")
+
+points_by_time <- ggplot(data = music_data) + 
+  aes(x = loudness, y = song_popularity) + 
+  geom_point(aes(color = factor(time_signature)), size = .6) + 
+  geom_smooth(aes(color = factor(time_signature)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure4.b: Song Popularity VS Loudness", x = "Loudness", y = "Song Popularity") 
+
+points_by_mode <- ggplot(data = music_data) + 
+  aes(x = loudness, y = song_popularity) + 
+  geom_point(aes(color = factor(audio_mode)), size = .6) + 
+  geom_smooth(aes(color = factor(audio_mode)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure4.c: Song Popularity VS Loudness", x = "Loudness", y = "Song Popularity") 
+
+grid.arrange(points_by_key, points_by_mode, points_by_time, ncol = 3)
+```
+```{r echo = FALSE, fig.height = 4, fig.width = 15}
+points_by_key <- ggplot(data = music_data) + 
+  aes(x = danceability, y = song_popularity) + 
+  geom_point(aes(color = factor(key)), size = .6) + 
+  geom_smooth(aes(color = factor(key)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure5.a: Song Popularity VS Danceability", x = "Danceability", y = "Song Popularity")
+
+points_by_time <- ggplot(data = music_data) + 
+  aes(x = danceability, y = song_popularity) + 
+  geom_point(aes(color = factor(time_signature)), size = .6) + 
+  geom_smooth(aes(color = factor(time_signature)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure5.b: Song Popularity VS Danceability", x = "Danceability", y = "Song Popularity") 
+
+points_by_mode <- ggplot(data = music_data) + 
+  aes(x = danceability, y = song_popularity) + 
+  geom_point(aes(color = factor(audio_mode)), size = .6) + 
+  geom_smooth(aes(color = factor(audio_mode)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure5.c: Song Popularity VS Danceability", x = "Danceability", y = "Song Popularity") 
+
+grid.arrange(points_by_key, points_by_mode, points_by_time, ncol = 3)
+```
+```{r echo = FALSE, fig.height = 4, fig.width = 15}
+points_by_key <- ggplot(data = music_data) + 
+  aes(x = song_duration_ms, y = song_popularity) + 
+  geom_point(aes(color = factor(key)), size = .6) + 
+  geom_smooth(aes(color = factor(key)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure6.a: Song Popularity VS Duration", x = "Duration", y = "Song Popularity")
+
+points_by_time <- ggplot(data = music_data) + 
+  aes(x = song_duration_ms, y = song_popularity) + 
+  geom_point(aes(color = factor(time_signature)), size = .6) + 
+  geom_smooth(aes(color = factor(time_signature)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure6.b: Song Popularity VS Duration", x = "Duration", y = "Song Popularity") 
+
+points_by_mode <- ggplot(data = music_data) + 
+  aes(x = song_duration_ms, y = song_popularity) + 
+  geom_point(aes(color = factor(audio_mode)), size = .6) + 
+  geom_smooth(aes(color = factor(audio_mode)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure6.c: Song Popularity VS Duration", x = "Duration", y = "Song Popularity") 
+
+grid.arrange(points_by_key, points_by_mode, points_by_time, ncol = 3)
+```
+```{r echo = FALSE, fig.height = 4, fig.width = 15}
+points_by_key <- ggplot(data = music_data) + 
+  aes(x = speechiness, y = song_popularity) + 
+  geom_point(aes(color = factor(key)), size = .6) + 
+  geom_smooth(aes(color = factor(key)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure7.a: Song Popularity VS Speechiness", x = "Speechiness", y = "Song Popularity")
+
+points_by_time <- ggplot(data = music_data) + 
+  aes(x = speechiness, y = song_popularity) + 
+  geom_point(aes(color = factor(time_signature)), size = .6) + 
+  geom_smooth(aes(color = factor(time_signature)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure7.b: Song Popularity VS Speechiness", x = "Speechiness", y = "Song Popularity") 
+
+points_by_mode <- ggplot(data = music_data) + 
+  aes(x = speechiness, y = song_popularity) + 
+  geom_point(aes(color = factor(audio_mode)), size = .6) + 
+  geom_smooth(aes(color = factor(audio_mode)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure7.c: Song Popularity VS Speechiness", x = "Speechiness", y = "Song Popularity") 
+
+grid.arrange(points_by_key, points_by_mode, points_by_time, ncol = 3)
+```
+```{r echo = FALSE, fig.height = 4, fig.width = 15}
+points_by_key <- ggplot(data = music_data) + 
+  aes(x = liveness, y = song_popularity) + 
+  geom_point(aes(color = factor(key)), size = .6) + 
+  geom_smooth(aes(color = factor(key)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure8.a: Song Popularity VS Liveness", x = "Liveness", y = "Song Popularity")
+
+points_by_time <- ggplot(data = music_data) + 
+  aes(x = liveness, y = song_popularity) + 
+  geom_point(aes(color = factor(time_signature)), size = .6) + 
+  geom_smooth(aes(color = factor(time_signature)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure8.b: Song Popularity VS Liveness", x = "Liveness", y = "Song Popularity") 
+
+points_by_mode <- ggplot(data = music_data) + 
+  aes(x = liveness, y = song_popularity) + 
+  geom_point(aes(color = factor(audio_mode)), size = .6) + 
+  geom_smooth(aes(color = factor(audio_mode)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure8.c: Song Popularity VS Liveness", x = "Liveness", y = "Song Popularity") 
+
+grid.arrange(points_by_key, points_by_mode, points_by_time, ncol = 3)
+```
+```{r echo = FALSE, fig.height = 4, fig.width = 15}
+points_by_key <- ggplot(data = music_data) + 
+  aes(x = instrumentalness, y = song_popularity) + 
+  geom_point(aes(color = factor(key)), size = .6) + 
+  geom_smooth(aes(color = factor(key)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure9.a: Song Popularity VS Instrumentalness", x = "Instrumentalness", y = "Song Popularity")
+
+points_by_time <- ggplot(data = music_data) + 
+  aes(x = instrumentalness, y = song_popularity) + 
+  geom_point(aes(color = factor(time_signature)), size = .6) + 
+  geom_smooth(aes(color = factor(time_signature)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure9.b: Song Popularity VS Instrumentalness", x = "Instrumentalness", y = "Song Popularity") 
+
+points_by_mode <- ggplot(data = music_data) + 
+  aes(x = instrumentalness, y = song_popularity) + 
+  geom_point(aes(color = factor(audio_mode)), size = .6) + 
+  geom_smooth(aes(color = factor(audio_mode)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure9.c: Song Popularity VS Instrumentalness", x = "Instrumentalness", y = "Song Popularity") 
+
+grid.arrange(points_by_key, points_by_mode, points_by_time, ncol = 3)
+```
+```{r echo = FALSE, fig.height = 4, fig.width = 15}
+points_by_key <- ggplot(data = music_data) + 
+  aes(x = log(acousticness), y = song_popularity) + 
+  geom_point(aes(color = factor(key)), size = .6) + 
+  geom_smooth(aes(color = factor(key)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure10.a: Song Popularity VS Log(acousticness)", x = "Log(acousticness)", y = "Song Popularity")
+
+points_by_time <- ggplot(data = music_data) + 
+  aes(x = acousticness, y = song_popularity) + 
+  geom_point(aes(color = factor(time_signature)), size = .6) + 
+  geom_smooth(aes(color = factor(time_signature)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure10.b: Song Popularity VS Acousticness", x = "Acousticness", y = "Song Popularity") 
+
+points_by_mode <- ggplot(data = music_data) + 
+  aes(x = acousticness, y = song_popularity) + 
+  geom_point(aes(color = factor(audio_mode)), size = .6) + 
+  geom_smooth(aes(color = factor(audio_mode)), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "Figure10.c: Song Popularity VS Acousticness", x = "Acousticness", y = "Song Popularity") 
+
+grid.arrange(points_by_key, points_by_mode, points_by_time, ncol = 3)
+```
+
+# Correlation
+```{r, fig.height = 5.4, fig.width = 9}
+music_data_cor <- music_data[, c(3,4,5,6,7,9,10,12,13,15)]
+correlation(music_data_cor)
+
+corr_music <- cor(music_data_cor)
+corrplot(corr_music, method = "number", diag = FALSE, type = "lower")
+
+chart.Correlation(music_data_cor, histogram=TRUE, pch=19)
+```
+
+# Fit Model
+```{r}
+model <- lmer(song_popularity ~ tempo + danceability + audio_valence + liveness + loudness + (1 + tempo + danceability|key) + (1|time_signature) + (1|audio_mode), data = music_data)
+
+summary(model)
+
+ranova(model)
+```
+
+```{r, fig.height = 6, fig.width = 8}
+VarCorr(model)
+# Check the confidence interval to random effects
+confint.merMod(model, method = 'Wald')
+
+# Fixed Effect
+plotFEsim(FEsim(model))
+
+# Random Effect
+round(ranef(model)$key, digits = 4)
+round(ranef(model)$time_signature, digits = 4)
+round(ranef(model)$audio_mode, digits = 4)
+```
+
+# Model Check
+```{r, fig.height = 5, fig.width = 8}
+# Residuals VS Fitted value
+plot(fitted(model), resid(model, type = "pearson"))
+abline(0,0, col="red")
+
+# Q-Q Plot
+qqnorm(resid(model)) 
+qqline(resid(model), col = "red")
+```
